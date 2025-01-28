@@ -10,6 +10,7 @@ use std::error::Error as StdError;
 
 use crate::CoreTypeEncoder;
 use core::convert::Infallible;
+use wasm_types::{DataIdx, ElemIdx, FuncIdx, GlobalIdx, MemIdx, TableIdx, TagIdx, TypeIdx};
 
 #[cfg(feature = "component-model")]
 mod component;
@@ -21,35 +22,35 @@ pub use self::component::*;
 pub trait Reencode {
     type Error;
 
-    fn data_index(&mut self, data: u32) -> u32 {
+    fn data_index(&mut self, data: DataIdx) -> DataIdx {
         utils::data_index(self, data)
     }
 
-    fn element_index(&mut self, element: u32) -> u32 {
+    fn element_index(&mut self, element: ElemIdx) -> ElemIdx {
         utils::element_index(self, element)
     }
 
-    fn function_index(&mut self, func: u32) -> u32 {
+    fn function_index(&mut self, func: FuncIdx) -> FuncIdx {
         utils::function_index(self, func)
     }
 
-    fn global_index(&mut self, global: u32) -> u32 {
+    fn global_index(&mut self, global: GlobalIdx) -> GlobalIdx {
         utils::global_index(self, global)
     }
 
-    fn memory_index(&mut self, memory: u32) -> u32 {
+    fn memory_index(&mut self, memory: MemIdx) -> MemIdx {
         utils::memory_index(self, memory)
     }
 
-    fn table_index(&mut self, table: u32) -> u32 {
+    fn table_index(&mut self, table: TableIdx) -> TableIdx {
         utils::table_index(self, table)
     }
 
-    fn tag_index(&mut self, tag: u32) -> u32 {
+    fn tag_index(&mut self, tag: TagIdx) -> TagIdx {
         utils::tag_index(self, tag)
     }
 
-    fn type_index(&mut self, ty: u32) -> u32 {
+    fn type_index(&mut self, ty: TypeIdx) -> TypeIdx {
         utils::type_index(self, ty)
     }
 
@@ -62,11 +63,11 @@ pub trait Reencode {
 
     fn external_index(&mut self, kind: wasmparser::ExternalKind, index: u32) -> u32 {
         match kind {
-            wasmparser::ExternalKind::Func => self.function_index(index),
-            wasmparser::ExternalKind::Table => self.table_index(index),
-            wasmparser::ExternalKind::Memory => self.memory_index(index),
-            wasmparser::ExternalKind::Global => self.global_index(index),
-            wasmparser::ExternalKind::Tag => self.tag_index(index),
+            wasmparser::ExternalKind::Func => self.function_index(FuncIdx(index)).0,
+            wasmparser::ExternalKind::Table => self.table_index(TableIdx(index)).0,
+            wasmparser::ExternalKind::Memory => self.memory_index(MemIdx(index)).0,
+            wasmparser::ExternalKind::Global => self.global_index(GlobalIdx(index)).0,
+            wasmparser::ExternalKind::Tag => self.tag_index(TagIdx(index)).0,
         }
     }
 
@@ -516,7 +517,7 @@ pub trait Reencode {
         count
     }
 
-    fn start_section(&mut self, start: u32) -> u32 {
+    fn start_section(&mut self, start: FuncIdx) -> FuncIdx {
         self.function_index(start)
     }
 }
@@ -610,6 +611,7 @@ pub mod utils {
     use crate::{CoreTypeEncoder, Encode};
     use alloc::vec::Vec;
     use core::ops::Range;
+    use wasm_types::{DataIdx, ElemIdx, FuncIdx, GlobalIdx, MemIdx, TableIdx, TagIdx, TypeIdx};
 
     pub fn parse_core_module<T: ?Sized + Reencode>(
         reencoder: &mut T,
@@ -868,7 +870,7 @@ pub mod utils {
         Ok(())
     }
 
-    pub fn memory_index<T: ?Sized + Reencode>(_reencoder: &mut T, memory: u32) -> u32 {
+    pub fn memory_index<T: ?Sized + Reencode>(_reencoder: &mut T, memory: MemIdx) -> MemIdx {
         memory
     }
 
@@ -893,11 +895,11 @@ pub mod utils {
         }
     }
 
-    pub fn function_index<T: ?Sized + Reencode>(_reencoder: &mut T, func: u32) -> u32 {
+    pub fn function_index<T: ?Sized + Reencode>(_reencoder: &mut T, func: FuncIdx) -> FuncIdx {
         func
     }
 
-    pub fn tag_index<T: ?Sized + Reencode>(_reencoder: &mut T, tag: u32) -> u32 {
+    pub fn tag_index<T: ?Sized + Reencode>(_reencoder: &mut T, tag: TagIdx) -> TagIdx {
         tag
     }
 
@@ -996,7 +998,7 @@ pub mod utils {
         }
     }
 
-    pub fn type_index<T: ?Sized + Reencode>(_reencoder: &mut T, ty: u32) -> u32 {
+    pub fn type_index<T: ?Sized + Reencode>(_reencoder: &mut T, ty: TypeIdx) -> TypeIdx {
         ty
     }
 
@@ -1509,19 +1511,19 @@ pub mod utils {
         })
     }
 
-    pub fn table_index<T: ?Sized + Reencode>(_reencoder: &mut T, table: u32) -> u32 {
+    pub fn table_index<T: ?Sized + Reencode>(_reencoder: &mut T, table: TableIdx) -> TableIdx {
         table
     }
 
-    pub fn global_index<T: ?Sized + Reencode>(_reencoder: &mut T, global: u32) -> u32 {
+    pub fn global_index<T: ?Sized + Reencode>(_reencoder: &mut T, global: GlobalIdx) -> GlobalIdx {
         global
     }
 
-    pub fn data_index<T: ?Sized + Reencode>(_reencoder: &mut T, data: u32) -> u32 {
+    pub fn data_index<T: ?Sized + Reencode>(_reencoder: &mut T, data: DataIdx) -> DataIdx {
         data
     }
 
-    pub fn element_index<T: ?Sized + Reencode>(_reencoder: &mut T, element: u32) -> u32 {
+    pub fn element_index<T: ?Sized + Reencode>(_reencoder: &mut T, element: ElemIdx) -> ElemIdx {
         element
     }
 

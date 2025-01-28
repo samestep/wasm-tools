@@ -24,6 +24,8 @@ use crate::{
     TableType, TypeBounds, ValType, WasmFeatures,
 };
 use core::mem;
+use index_vec::IndexVec;
+use wasm_types::{FuncIdx, GlobalIdx, MemIdx, TableIdx, TagIdx, TypeIdx};
 
 fn to_kebab_str<'a>(s: &'a str, desc: &str, offset: usize) -> Result<&'a KebabStr> {
     match KebabStr::new(s) {
@@ -44,14 +46,14 @@ pub(crate) struct ComponentState {
     kind: ComponentKind,
 
     // Core index spaces
-    pub core_types: Vec<ComponentCoreTypeId>,
-    pub core_funcs: Vec<CoreTypeId>,
-    pub core_tags: Vec<CoreTypeId>,
+    pub core_types: IndexVec<TypeIdx, ComponentCoreTypeId>,
+    pub core_funcs: IndexVec<FuncIdx, CoreTypeId>,
+    pub core_tags: IndexVec<TagIdx, CoreTypeId>,
     pub core_modules: Vec<ComponentCoreModuleTypeId>,
     pub core_instances: Vec<ComponentCoreInstanceTypeId>,
-    pub core_memories: Vec<MemoryType>,
-    pub core_tables: Vec<TableType>,
-    pub core_globals: Vec<GlobalType>,
+    pub core_memories: IndexVec<MemIdx, MemoryType>,
+    pub core_tables: IndexVec<TableIdx, TableType>,
+    pub core_globals: IndexVec<GlobalIdx, GlobalType>,
 
     // Component index spaces
     pub types: Vec<ComponentAnyTypeId>,
@@ -954,7 +956,7 @@ impl ComponentState {
 
     pub fn lift_function(
         &mut self,
-        core_func_index: u32,
+        core_func_index: FuncIdx,
         type_index: u32,
         options: Vec<CanonicalOption>,
         types: &TypeList,
@@ -1102,7 +1104,7 @@ impl ComponentState {
 
     pub fn task_return(
         &mut self,
-        type_index: u32,
+        type_index: TypeIdx,
         types: &mut TypeAlloc,
         offset: usize,
         features: &WasmFeatures,
@@ -1134,7 +1136,7 @@ impl ComponentState {
     pub fn task_wait(
         &mut self,
         _async_: bool,
-        memory: u32,
+        memory: MemIdx,
         types: &mut TypeAlloc,
         offset: usize,
         features: &WasmFeatures,
@@ -1156,7 +1158,7 @@ impl ComponentState {
     pub fn task_poll(
         &mut self,
         _async_: bool,
-        memory: u32,
+        memory: MemIdx,
         types: &mut TypeAlloc,
         offset: usize,
         features: &WasmFeatures,
@@ -1672,7 +1674,7 @@ impl ComponentState {
 
     pub fn thread_spawn(
         &mut self,
-        func_ty_index: u32,
+        func_ty_index: TypeIdx,
         types: &mut TypeAlloc,
         offset: usize,
         features: &WasmFeatures,
@@ -1812,7 +1814,7 @@ impl ComponentState {
                     Self::alias_module(components, count, index, offset)
                 }
                 ComponentOuterAliasKind::CoreType => {
-                    Self::alias_core_type(components, count, index, offset)
+                    Self::alias_core_type(components, count, TypeIdx(index), offset)
                 }
                 ComponentOuterAliasKind::Type => {
                     Self::alias_type(components, count, index, types, offset)
@@ -2209,18 +2211,20 @@ impl ComponentState {
                         crate::OuterAliasKind::Type => {
                             let ty = if count == 0 {
                                 // Local alias, check the local module state
-                                ComponentCoreTypeId::Sub(state.type_id_at(index, offset)?)
+                                ComponentCoreTypeId::Sub(state.type_id_at(TypeIdx(index), offset)?)
                             } else {
                                 // Otherwise, check the enclosing component state
                                 let component =
                                     Self::check_alias_count(components, count - 1, offset)?;
-                                component.core_type_at(index, offset)?
+                                component.core_type_at(TypeIdx(index), offset)?
                             };
 
                             check_max(state.types.len(), 1, MAX_WASM_TYPES, "types", offset)?;
 
                             match ty {
-                                ComponentCoreTypeId::Sub(ty) => state.types.push(ty),
+                                ComponentCoreTypeId::Sub(ty) => {
+                                    state.types.push(ty);
+                                }
                                 // TODO https://github.com/WebAssembly/component-model/issues/265
                                 ComponentCoreTypeId::Module(_) => bail!(
                                     offset,
@@ -2920,7 +2924,7 @@ impl ComponentState {
                     insert_export(
                         types,
                         export.name,
-                        EntityType::Func(self.core_function_at(export.index, offset)?),
+                        EntityType::Func(self.core_function_at(FuncIdx(export.index), offset)?),
                         &mut inst_exports,
                         &mut info,
                         offset,
@@ -2929,7 +2933,7 @@ impl ComponentState {
                 ExternalKind::Table => insert_export(
                     types,
                     export.name,
-                    EntityType::Table(*self.table_at(export.index, offset)?),
+                    EntityType::Table(*self.table_at(TableIdx(export.index), offset)?),
                     &mut inst_exports,
                     &mut info,
                     offset,
@@ -2937,7 +2941,7 @@ impl ComponentState {
                 ExternalKind::Memory => insert_export(
                     types,
                     export.name,
-                    EntityType::Memory(*self.memory_at(export.index, offset)?),
+                    EntityType::Memory(*self.memory_at(MemIdx(export.index), offset)?),
                     &mut inst_exports,
                     &mut info,
                     offset,
@@ -2946,7 +2950,7 @@ impl ComponentState {
                     insert_export(
                         types,
                         export.name,
-                        EntityType::Global(*self.global_at(export.index, offset)?),
+                        EntityType::Global(*self.global_at(GlobalIdx(export.index), offset)?),
                         &mut inst_exports,
                         &mut info,
                         offset,
@@ -2955,7 +2959,7 @@ impl ComponentState {
                 ExternalKind::Tag => insert_export(
                     types,
                     export.name,
-                    EntityType::Tag(self.core_function_at(export.index, offset)?),
+                    EntityType::Tag(self.core_function_at(FuncIdx(export.index), offset)?),
                     &mut inst_exports,
                     &mut info,
                     offset,
@@ -3169,7 +3173,7 @@ impl ComponentState {
     fn alias_core_type(
         components: &mut [Self],
         count: u32,
-        index: u32,
+        index: TypeIdx,
         offset: usize,
     ) -> Result<()> {
         let component = Self::check_alias_count(components, count, offset)?;
@@ -3509,9 +3513,9 @@ impl ComponentState {
         })
     }
 
-    pub fn core_type_at(&self, idx: u32, offset: usize) -> Result<ComponentCoreTypeId> {
+    pub fn core_type_at(&self, idx: TypeIdx, offset: usize) -> Result<ComponentCoreTypeId> {
         self.core_types
-            .get(idx as usize)
+            .get(idx)
             .copied()
             .ok_or_else(|| format_err!(offset, "unknown type {idx}: type index out of bounds"))
     }
@@ -3581,8 +3585,8 @@ impl ComponentState {
         }
     }
 
-    fn core_function_at(&self, idx: u32, offset: usize) -> Result<CoreTypeId> {
-        match self.core_funcs.get(idx as usize) {
+    fn core_function_at(&self, idx: FuncIdx, offset: usize) -> Result<CoreTypeId> {
+        match self.core_funcs.get(idx) {
             Some(id) => Ok(*id),
             None => bail!(
                 offset,
@@ -3627,22 +3631,22 @@ impl ComponentState {
         }
     }
 
-    fn global_at(&self, idx: u32, offset: usize) -> Result<&GlobalType> {
-        match self.core_globals.get(idx as usize) {
+    fn global_at(&self, idx: GlobalIdx, offset: usize) -> Result<&GlobalType> {
+        match self.core_globals.get(idx) {
             Some(t) => Ok(t),
             None => bail!(offset, "unknown global {idx}: global index out of bounds"),
         }
     }
 
-    fn table_at(&self, idx: u32, offset: usize) -> Result<&TableType> {
-        match self.core_tables.get(idx as usize) {
+    fn table_at(&self, idx: TableIdx, offset: usize) -> Result<&TableType> {
+        match self.core_tables.get(idx) {
             Some(t) => Ok(t),
             None => bail!(offset, "unknown table {idx}: table index out of bounds"),
         }
     }
 
-    fn memory_at(&self, idx: u32, offset: usize) -> Result<&MemoryType> {
-        match self.core_memories.get(idx as usize) {
+    fn memory_at(&self, idx: MemIdx, offset: usize) -> Result<&MemoryType> {
+        match self.core_memories.get(idx) {
             Some(t) => Ok(t),
             None => bail!(offset, "unknown memory {idx}: memory index out of bounds"),
         }
@@ -3764,7 +3768,7 @@ impl InternRecGroup for ComponentState {
         self.core_types.push(ComponentCoreTypeId::Sub(id));
     }
 
-    fn type_id_at(&self, idx: u32, offset: usize) -> Result<CoreTypeId> {
+    fn type_id_at(&self, idx: TypeIdx, offset: usize) -> Result<CoreTypeId> {
         match self.core_type_at(idx, offset)? {
             ComponentCoreTypeId::Sub(id) => Ok(id),
             ComponentCoreTypeId::Module(_) => {

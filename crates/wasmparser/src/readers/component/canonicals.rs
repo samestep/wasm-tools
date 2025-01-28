@@ -1,6 +1,7 @@
 use crate::limits::MAX_WASM_CANONICAL_OPTIONS;
 use crate::prelude::*;
 use crate::{BinaryReader, FromReader, Result, SectionLimited};
+use wasm_types::{FuncIdx, MemIdx, TypeIdx};
 
 /// Represents options for component functions.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -14,20 +15,20 @@ pub enum CanonicalOption {
     /// The memory to use if the lifting or lowering of a function requires memory access.
     ///
     /// The value is an index to a core memory.
-    Memory(u32),
+    Memory(MemIdx),
     /// The realloc function to use if the lifting or lowering of a function requires memory
     /// allocation.
     ///
     /// The value is an index to a core function of type `(func (param i32 i32 i32 i32) (result i32))`.
-    Realloc(u32),
+    Realloc(FuncIdx),
     /// The post-return function to use if the lifting of a function requires
     /// cleanup after the function returns.
-    PostReturn(u32),
+    PostReturn(FuncIdx),
     /// Indicates that specified function should be lifted or lowered using the `async` ABI.
     Async,
     /// The function to use if the async lifting of a function should receive task/stream/future progress events
     /// using a callback.
-    Callback(u32),
+    Callback(FuncIdx),
 }
 
 /// Represents a canonical function in a WebAssembly component.
@@ -36,7 +37,7 @@ pub enum CanonicalFunction {
     /// The function lifts a core WebAssembly function to the canonical ABI.
     Lift {
         /// The index of the core WebAssembly function to lift.
-        core_func_index: u32,
+        core_func_index: FuncIdx,
         /// The index of the lifted function's type.
         type_index: u32,
         /// The canonical options for the function.
@@ -68,7 +69,7 @@ pub enum CanonicalFunction {
     /// A function which spawns a new thread by invoking the shared function.
     ThreadSpawn {
         /// The index of the function to spawn.
-        func_ty_index: u32,
+        func_ty_index: TypeIdx,
     },
     /// A function which returns the number of threads that can be expected to
     /// execute concurrently
@@ -83,7 +84,7 @@ pub enum CanonicalFunction {
         /// Core function type whose parameters represent the flattened
         /// representation of the component-level results to be returned by the
         /// currently executing task.
-        type_index: u32,
+        type_index: TypeIdx,
     },
     /// A function which waits for at least one outstanding async
     /// task/stream/future to make progress, returning the first such event.
@@ -91,7 +92,7 @@ pub enum CanonicalFunction {
         /// If `true`, indicates the caller instance maybe reentered.
         async_: bool,
         /// Memory to use when storing the event.
-        memory: u32,
+        memory: MemIdx,
     },
     /// A function which checks whether any outstanding async task/stream/future
     /// has made progress.  Unlike `task.wait`, this does not block and may
@@ -100,7 +101,7 @@ pub enum CanonicalFunction {
         /// If `true`, indicates the caller instance maybe reentered.
         async_: bool,
         /// Memory to use when storing the event, if any.
-        memory: u32,
+        memory: MemIdx,
     },
     /// A function which yields control to the host so that other tasks are able
     /// to make progress, if any.
@@ -238,7 +239,7 @@ impl<'a> FromReader<'a> for CanonicalFunction {
         Ok(match reader.read_u8()? {
             0x00 => match reader.read_u8()? {
                 0x00 => {
-                    let core_func_index = reader.read_var_u32()?;
+                    let core_func_index = reader.read_funcidx()?;
                     let options = reader
                         .read_iter(MAX_WASM_CANONICAL_OPTIONS, "canonical options")?
                         .collect::<Result<_>>()?;
@@ -357,11 +358,11 @@ impl<'a> FromReader<'a> for CanonicalOption {
             0x00 => CanonicalOption::UTF8,
             0x01 => CanonicalOption::UTF16,
             0x02 => CanonicalOption::CompactUTF16,
-            0x03 => CanonicalOption::Memory(reader.read_var_u32()?),
-            0x04 => CanonicalOption::Realloc(reader.read_var_u32()?),
-            0x05 => CanonicalOption::PostReturn(reader.read_var_u32()?),
+            0x03 => CanonicalOption::Memory(reader.read_memidx()?),
+            0x04 => CanonicalOption::Realloc(reader.read_funcidx()?),
+            0x05 => CanonicalOption::PostReturn(reader.read_funcidx()?),
             0x06 => CanonicalOption::Async,
-            0x07 => CanonicalOption::Callback(reader.read_var_u32()?),
+            0x07 => CanonicalOption::Callback(reader.read_funcidx()?),
             x => return reader.invalid_leading_byte(x, "canonical option"),
         })
     }

@@ -17,6 +17,10 @@ use crate::{BinaryReader, BinaryReaderError, Result};
 use ::core::fmt;
 use ::core::marker;
 use ::core::ops::Range;
+use wasm_types::{
+    DataIdx, ElemIdx, FieldIdx, FuncIdx, GlobalIdx, LabelIdx, LocalIdx, MemIdx, TableIdx, TagIdx,
+    TypeIdx,
+};
 
 #[cfg(feature = "component-model")]
 mod component;
@@ -53,6 +57,72 @@ impl<'a> FromReader<'a> for bool {
 impl<'a> FromReader<'a> for u32 {
     fn from_reader(reader: &mut BinaryReader<'a>) -> Result<Self> {
         reader.read_var_u32()
+    }
+}
+
+impl<'a> FromReader<'a> for TypeIdx {
+    fn from_reader(reader: &mut BinaryReader<'a>) -> Result<Self> {
+        reader.read_typeidx()
+    }
+}
+
+impl<'a> FromReader<'a> for FuncIdx {
+    fn from_reader(reader: &mut BinaryReader<'a>) -> Result<Self> {
+        reader.read_funcidx()
+    }
+}
+
+impl<'a> FromReader<'a> for TableIdx {
+    fn from_reader(reader: &mut BinaryReader<'a>) -> Result<Self> {
+        reader.read_tableidx()
+    }
+}
+
+impl<'a> FromReader<'a> for MemIdx {
+    fn from_reader(reader: &mut BinaryReader<'a>) -> Result<Self> {
+        reader.read_memidx()
+    }
+}
+
+impl<'a> FromReader<'a> for TagIdx {
+    fn from_reader(reader: &mut BinaryReader<'a>) -> Result<Self> {
+        reader.read_tagidx()
+    }
+}
+
+impl<'a> FromReader<'a> for GlobalIdx {
+    fn from_reader(reader: &mut BinaryReader<'a>) -> Result<Self> {
+        reader.read_globalidx()
+    }
+}
+
+impl<'a> FromReader<'a> for ElemIdx {
+    fn from_reader(reader: &mut BinaryReader<'a>) -> Result<Self> {
+        reader.read_elemidx()
+    }
+}
+
+impl<'a> FromReader<'a> for DataIdx {
+    fn from_reader(reader: &mut BinaryReader<'a>) -> Result<Self> {
+        reader.read_dataidx()
+    }
+}
+
+impl<'a> FromReader<'a> for LocalIdx {
+    fn from_reader(reader: &mut BinaryReader<'a>) -> Result<Self> {
+        reader.read_localidx()
+    }
+}
+
+impl<'a> FromReader<'a> for LabelIdx {
+    fn from_reader(reader: &mut BinaryReader<'a>) -> Result<Self> {
+        reader.read_labelidx()
+    }
+}
+
+impl<'a> FromReader<'a> for FieldIdx {
+    fn from_reader(reader: &mut BinaryReader<'a>) -> Result<Self> {
+        reader.read_fieldidx()
     }
 }
 

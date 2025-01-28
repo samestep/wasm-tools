@@ -6,6 +6,7 @@ use crate::{
     FromReader, Import, Result, SectionLimited, TypeRef, ValType,
 };
 use core::fmt;
+use wasm_types::FuncIdx;
 
 /// Represents the kind of an outer core alias in a WebAssembly component.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -263,7 +264,7 @@ pub enum ComponentType<'a> {
         rep: ValType,
         /// An optionally-specified destructor to use for when this resource is
         /// no longer needed.
-        dtor: Option<u32>,
+        dtor: Option<FuncIdx>,
     },
 }
 
