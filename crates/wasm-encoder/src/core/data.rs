@@ -1,5 +1,6 @@
 use crate::{encode_section, encoding_size, ConstExpr, Encode, Section, SectionId};
 use alloc::vec::Vec;
+use wasm_types::MemIdx;
 
 /// An encoder for the data section.
 ///
@@ -56,7 +57,7 @@ pub enum DataSegmentMode<'a> {
     /// An active data segment.
     Active {
         /// The memory this segment applies to.
-        memory_index: u32,
+        memory_index: MemIdx,
         /// The offset where this segment's data is initialized at.
         offset: &'a ConstExpr,
     },
@@ -93,7 +94,7 @@ impl DataSection {
                 self.bytes.push(0x01);
             }
             DataSegmentMode::Active {
-                memory_index: 0,
+                memory_index: MemIdx(0),
                 offset,
             } => {
                 self.bytes.push(0x00);
@@ -118,7 +119,7 @@ impl DataSection {
     }
 
     /// Define an active data segment.
-    pub fn active<D>(&mut self, memory_index: u32, offset: &ConstExpr, data: D) -> &mut Self
+    pub fn active<D>(&mut self, memory_index: MemIdx, offset: &ConstExpr, data: D) -> &mut Self
     where
         D: IntoIterator<Item = u8>,
         D::IntoIter: ExactSizeIterator,

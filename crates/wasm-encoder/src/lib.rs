@@ -90,6 +90,11 @@ pub use self::core::*;
 pub use self::raw::*;
 
 use alloc::vec::Vec;
+use wasm_types::{
+    ComponentFuncIdx, ComponentIdx, ComponentInstanceIdx, ComponentTypeIdx, ComponentValueIdx,
+    CoreInstanceIdx, CoreModuleIdx, DataIdx, ElemIdx, FieldIdx, FuncIdx, GlobalIdx, LabelIdx,
+    LocalIdx, MemIdx, TableIdx, TagIdx, TypeIdx,
+};
 
 /// Implemented by types that can be encoded into a byte sink.
 pub trait Encode {
@@ -137,6 +142,114 @@ impl Encode for u32 {
     fn encode(&self, sink: &mut Vec<u8>) {
         let (value, pos) = leb128fmt::encode_u32(*self).unwrap();
         sink.extend_from_slice(&value[..pos]);
+    }
+}
+
+impl Encode for TypeIdx {
+    fn encode(&self, sink: &mut Vec<u8>) {
+        self.0.encode(sink);
+    }
+}
+
+impl Encode for FuncIdx {
+    fn encode(&self, sink: &mut Vec<u8>) {
+        self.0.encode(sink);
+    }
+}
+
+impl Encode for TableIdx {
+    fn encode(&self, sink: &mut Vec<u8>) {
+        self.0.encode(sink);
+    }
+}
+
+impl Encode for MemIdx {
+    fn encode(&self, sink: &mut Vec<u8>) {
+        self.0.encode(sink);
+    }
+}
+
+impl Encode for TagIdx {
+    fn encode(&self, sink: &mut Vec<u8>) {
+        self.0.encode(sink);
+    }
+}
+
+impl Encode for GlobalIdx {
+    fn encode(&self, sink: &mut Vec<u8>) {
+        self.0.encode(sink);
+    }
+}
+
+impl Encode for ElemIdx {
+    fn encode(&self, sink: &mut Vec<u8>) {
+        self.0.encode(sink);
+    }
+}
+
+impl Encode for DataIdx {
+    fn encode(&self, sink: &mut Vec<u8>) {
+        self.0.encode(sink);
+    }
+}
+
+impl Encode for LocalIdx {
+    fn encode(&self, sink: &mut Vec<u8>) {
+        self.0.encode(sink);
+    }
+}
+
+impl Encode for LabelIdx {
+    fn encode(&self, sink: &mut Vec<u8>) {
+        self.0.encode(sink);
+    }
+}
+
+impl Encode for FieldIdx {
+    fn encode(&self, sink: &mut Vec<u8>) {
+        self.0.encode(sink);
+    }
+}
+
+impl Encode for CoreModuleIdx {
+    fn encode(&self, sink: &mut Vec<u8>) {
+        self.0.encode(sink);
+    }
+}
+
+impl Encode for CoreInstanceIdx {
+    fn encode(&self, sink: &mut Vec<u8>) {
+        self.0.encode(sink);
+    }
+}
+
+impl Encode for ComponentTypeIdx {
+    fn encode(&self, sink: &mut Vec<u8>) {
+        self.0.encode(sink);
+    }
+}
+
+impl Encode for ComponentFuncIdx {
+    fn encode(&self, sink: &mut Vec<u8>) {
+        self.0.encode(sink);
+    }
+}
+
+impl Encode for ComponentIdx {
+    fn encode(&self, sink: &mut Vec<u8>) {
+        self.0.encode(sink);
+    }
+}
+
+impl Encode for ComponentInstanceIdx {
+    fn encode(&self, sink: &mut Vec<u8>) {
+        self.0.encode(sink);
+    }
+}
+
+impl Encode for ComponentValueIdx {
+    fn encode(&self, sink: &mut Vec<u8>) {
+        self.0.encode(sink);
     }
 }
 

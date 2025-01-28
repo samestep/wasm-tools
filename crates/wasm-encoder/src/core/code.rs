@@ -2,6 +2,7 @@ use crate::{encode_section, Encode, HeapType, RefType, Section, SectionId, ValTy
 use alloc::borrow::Cow;
 use alloc::vec;
 use alloc::vec::Vec;
+use wasm_types::{LabelIdx, MemIdx, TagIdx, TypeIdx};
 
 /// An encoder for the code section.
 ///
@@ -301,12 +302,12 @@ pub struct MemArg {
     /// (expressed the exponent of a power of two).
     pub align: u32,
     /// The index of the memory this instruction is operating upon.
-    pub memory_index: u32,
+    pub memory_index: MemIdx,
 }
 
 impl Encode for MemArg {
     fn encode(&self, sink: &mut Vec<u8>) {
-        if self.memory_index == 0 {
+        if self.memory_index == MemIdx(0) {
             self.align.encode(sink);
             self.offset.encode(sink);
         } else {
@@ -356,7 +357,7 @@ pub enum BlockType {
     /// `[] -> [t]`
     Result(ValType),
     /// The `n`th function type.
-    FunctionType(u32),
+    FunctionType(TypeIdx),
 }
 
 impl Encode for BlockType {
@@ -364,7 +365,7 @@ impl Encode for BlockType {
         match *self {
             Self::Empty => sink.push(0x40),
             Self::Result(ty) => ty.encode(sink),
-            Self::FunctionType(f) => (f as i64).encode(sink),
+            Self::FunctionType(f) => f.encode(sink),
         }
     }
 }
@@ -3788,10 +3789,10 @@ impl Encode for Instruction<'_> {
 #[derive(Clone, Debug)]
 #[allow(missing_docs)]
 pub enum Catch {
-    One { tag: u32, label: u32 },
-    OneRef { tag: u32, label: u32 },
-    All { label: u32 },
-    AllRef { label: u32 },
+    One { tag: TagIdx, label: LabelIdx },
+    OneRef { tag: TagIdx, label: LabelIdx },
+    All { label: LabelIdx },
+    AllRef { label: LabelIdx },
 }
 
 impl Encode for Catch {
@@ -3822,8 +3823,8 @@ impl Encode for Catch {
 #[derive(Clone, Debug)]
 #[allow(missing_docs)]
 pub enum Handle {
-    OnLabel { tag: u32, label: u32 },
-    OnSwitch { tag: u32 },
+    OnLabel { tag: TagIdx, label: LabelIdx },
+    OnSwitch { tag: TagIdx },
 }
 
 impl Encode for Handle {

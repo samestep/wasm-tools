@@ -1,5 +1,6 @@
 use crate::{encoding_size, Encode, Section, SectionId};
 use alloc::vec::Vec;
+use wasm_types::FuncIdx;
 
 /// An encoder for the start section of WebAssembly modules.
 ///
@@ -23,12 +24,12 @@ use alloc::vec::Vec;
 #[derive(Clone, Copy, Debug)]
 pub struct StartSection {
     /// The index of the start function.
-    pub function_index: u32,
+    pub function_index: FuncIdx,
 }
 
 impl Encode for StartSection {
     fn encode(&self, sink: &mut Vec<u8>) {
-        encoding_size(self.function_index).encode(sink);
+        encoding_size(self.function_index.0).encode(sink);
         self.function_index.encode(sink);
     }
 }

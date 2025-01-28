@@ -1,6 +1,6 @@
 use crate::{encode_section, Encode, Section, SectionId};
 use alloc::vec::Vec;
-
+use wasm_types::TypeIdx;
 /// An encoder for the tag section.
 ///
 /// # Example
@@ -75,7 +75,7 @@ pub struct TagType {
     /// The kind of tag
     pub kind: TagKind,
     /// The function type this tag uses
-    pub func_type_idx: u32,
+    pub func_type_idx: TypeIdx,
 }
 
 impl Encode for TagType {
